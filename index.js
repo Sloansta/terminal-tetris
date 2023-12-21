@@ -104,7 +104,7 @@ const canMoveDown = () => {
         for (let x = 0; x < currentTetromino.shape[y].length; x++) {
             if (currentTetromino.shape[y][x]) {
                 let newY = currentTetromino.y + y + 1;
-                if (newY >= gridHeight - 1 || gameState[newY][currentTetromino.x + x]) {
+                if (newY >= gridHeight - 1 || gameState[newY][currentTetromino.x-1]) {
                     return false;
                 }
             }
@@ -177,6 +177,36 @@ const renderGameState = () => {
     screen.render();
 };
 
+const rotateTetromino = (tetromino) => {
+    const type = Object.keys(Tetromino).find(key => Tetromino[key].shape.toString() === tetromino.shape.toString());
+    if(type == 'square') return;
+
+    let rotatedShape = tetromino.shape[0].map((val, index) => 
+        tetromino.shape.map(row => row[index]).reverse()
+    );
+
+    if(type == 'I') {
+        rotatedShape = rotatedShape.length === 1 ? [[1], [1], [1], [1]] : [[1, 1, 1, 1]];
+    } else if (['S', 'Z'].includes(type)) {
+        rotatedShape = rotatedShape.length === 2 ? rotatedShape[0].map((val, index) =>
+            rotatedShape.map(row => row[index])
+        ) : rotatedShape;
+    }
+
+    let newX = tetromino.x;
+    let newY = tetromino.y;
+    if(newX + rotatedShape[0].length > gridWidth) {
+        newX = gridWidth - rotatedShape[0].length;
+    }
+    if(newY + rotatedShape.length > gridHeight) {
+        newY = gridHeight - rotatedShape.length;
+    }
+
+    tetromino.shape = rotatedShape;
+    tetromino.x = newX;
+    tetromino.y = newY;
+};
+
 screen.key(['left', 'right', 'down', 'up', 'escape', 'q', 'C-c'], (ch, key) => {
     switch (key.name) {
         case 'left':
@@ -194,7 +224,7 @@ screen.key(['left', 'right', 'down', 'up', 'escape', 'q', 'C-c'], (ch, key) => {
             }
             break;
         case 'up':
-            // Rotation logic here (not implemented)
+            rotateTetromino(currentTetromino);
             break;
         case 'escape':
         case 'q':
