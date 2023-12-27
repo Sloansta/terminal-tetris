@@ -185,6 +185,8 @@ const rotateTetromino = (tetromino) => {
         tetromino.shape.map(row => row[index]).reverse()
     );
 
+    let newShape = tetromino.shape[0].map((val, index) => tetromino.shape.map(row => row[index]).reverse());
+
     if(type == 'I') {
         rotatedShape = rotatedShape.length === 1 ? [[1], [1], [1], [1]] : [[1, 1, 1, 1]];
     } else if (['S', 'Z'].includes(type)) {
@@ -195,16 +197,32 @@ const rotateTetromino = (tetromino) => {
 
     let newX = tetromino.x;
     let newY = tetromino.y;
-    if(newX + rotatedShape[0].length > gridWidth) {
-        newX = gridWidth - rotatedShape[0].length;
+    // Adjusting for right and bottom edge
+    while (newX + newShape[0].length > gridWidth) {
+        newX--; 
     }
-    if(newY + rotatedShape.length > gridHeight) {
-        newY = gridHeight - rotatedShape.length;
+    while (newY + newShape.length > gridHeight) {
+        newY--; 
     }
 
-    tetromino.shape = rotatedShape;
-    tetromino.x = newX;
-    tetromino.y = newY;
+    if (!isCollision(newX, newY, newShape)) {
+        tetromino.shape = newShape;
+        tetromino.x = newX;
+        tetromino.y = newY;
+    }
+};
+
+const isCollision = (newX, newY, newShape) => {
+    for (let y = 0; y < newShape.length; y++) {
+        for (let x = 0; x < newShape[y].length; x++) {
+            if (newShape[y][x]) {
+                if (newY + y >= gridHeight || newX + x >= gridWidth || newX + x < 0 || gameState[newY + y][newX + x]) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 };
 
 screen.key(['left', 'right', 'down', 'up', 'escape', 'q', 'C-c'], (ch, key) => {
@@ -213,7 +231,9 @@ screen.key(['left', 'right', 'down', 'up', 'escape', 'q', 'C-c'], (ch, key) => {
             currentTetromino.x = Math.max(currentTetromino.x - 1, 0);
             break;
         case 'right':
-            currentTetromino.x = Math.min(currentTetromino.x + 1, gridWidth - currentTetromino.shape[0].length);
+            if (currentTetromino.x + currentTetromino.shape[0].length < gridWidth) {
+                currentTetromino.x++;
+            }
             break;
         case 'down':
             if (canMoveDown()) {
